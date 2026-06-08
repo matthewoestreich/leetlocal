@@ -5,7 +5,7 @@ Scaffolding to bring leetcode questions local, so you can work on problems in yo
 # Usage
 
 ```bash
-leetlocal --title "Partition Array According to Given Pivot" --language JavaScript --output-dir .
+leetlocal --title "partition-array-according-to-given-pivot" --language JavaScript --output-dir .
 ```
 
 # Important
