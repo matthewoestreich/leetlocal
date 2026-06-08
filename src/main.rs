@@ -1,13 +1,11 @@
 mod error;
 mod language;
 mod leetcode;
-mod question;
-mod templates;
 
-pub(crate) use crate::{error::Error, language::Language, question::Question};
+pub(crate) use crate::{error::Error, language::Language};
 
 use clap::Parser;
-use std::{path::PathBuf, process};
+use std::{fs, path::PathBuf, process};
 
 #[tokio::main]
 async fn main() {
@@ -26,26 +24,56 @@ async fn main() {
         }
     };
 
-    if !question.has_language(&lang) {
+    let question_snippet = question.get_snippet(&lang);
+    if question_snippet.is_none() {
         eprintln!("Question does not have support for language '{lang}'");
         process::exit(1);
     }
 
-    /*
-    if !out_dir.exists() {
-        if !force {
-            eprintln!(
-                "Output directory '{}' does not exist and '--force' was not used! Please use '--force' to automatically create output pathway.",
-                out_dir.to_string_lossy()
-            );
-            process::exit(1);
-        }
-
-        // TODO : Create output dir
+    if !out_dir.exists() && !force {
+        eprintln!(
+            "Output directory '{}' does not exist and '--force' was not used! Please use '--force' to automatically create output pathway.",
+            out_dir.to_string_lossy()
+        );
+        process::exit(1);
     }
-    */
+    if out_dir.exists() && out_dir.is_file() {
+        eprintln!("Output directory must be to a directory, not a file!");
+        process::exit(1);
+    }
 
-    println!("{}", serde_json::to_string_pretty(&question).unwrap());
+    let mut readme_path = out_dir.clone();
+    readme_path.push("README.md");
+
+    if readme_path.exists() && !force {
+        eprintln!(
+            "README.md already exists at output directory. Please use '--force' to overwrite files!"
+        );
+        process::exit(1);
+    }
+
+    let mut code_path = out_dir.clone();
+    code_path.push("main");
+    code_path.set_extension(lang.file_extension());
+
+    if code_path.exists() && !force {
+        eprintln!(
+            "main.{} already exists at output directory. Please use '--force' to overwrite files!",
+            lang.file_extension()
+        );
+        process::exit(1);
+    }
+
+    write_file(readme_path, &question.create_readme_data()).unwrap_or_else(|e| {
+        eprintln!("Something went wrong writing README! {e:?}");
+        process::exit(1);
+    });
+
+    let code_data = question_snippet.expect("to be already validated").code;
+    write_file(code_path, &code_data).unwrap_or_else(|e| {
+        eprintln!("Something went wrong writing main! {e:?}");
+        process::exit(1);
+    });
 }
 
 #[derive(Parser, Debug)]
@@ -68,4 +96,11 @@ struct CliArgs {
     /// Force creation of output directory
     #[arg(short, long, default_value_t = false)]
     force: bool,
+}
+
+fn write_file(path: PathBuf, content: &str) -> std::io::Result<()> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(path, content)
 }

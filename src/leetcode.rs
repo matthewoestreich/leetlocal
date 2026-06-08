@@ -1,7 +1,9 @@
-use crate::{Error, Question};
+use crate::{Error, Language};
 use reqwest::header::{CONTENT_TYPE, REFERER, USER_AGENT};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
-pub async fn get_question(title: &str) -> Result<Question, Error> {
+pub async fn get_question(title_slug: &str) -> Result<Question, Error> {
     let query_str = r#"
         query questionData($titleSlug: String!) {
           question(titleSlug: $titleSlug) {
@@ -14,6 +16,10 @@ pub async fn get_question(title: &str) -> Result<Question, Error> {
               langSlug
               code
             }
+            topicTags {
+              name
+              slug
+            }
           }
         }
     "#;
@@ -21,7 +27,7 @@ pub async fn get_question(title: &str) -> Result<Question, Error> {
     let payload = serde_json::json!({
         "query": query_str,
         "variables": {
-            "titleSlug": title,
+            "titleSlug": title_slug,
         }
     });
 
@@ -49,4 +55,67 @@ pub async fn get_question(title: &str) -> Result<Question, Error> {
     }
 
     Question::try_from(raw_question)
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct Question {
+    #[serde(rename = "title")]
+    pub problem: String,
+    #[serde(rename = "exampleTestcases")]
+    pub example_testcases: String,
+    #[serde(rename = "codeSnippets")]
+    pub code_snippets: Vec<CodeSnippet>,
+    #[serde(rename = "topicTags")]
+    pub topics: Vec<Topic>,
+    pub content: String,
+    pub hints: Vec<String>,
+}
+
+impl Question {
+    pub fn get_snippet(&self, language: &Language) -> Option<CodeSnippet> {
+        let lang_slug = language.slug();
+        self.code_snippets
+            .iter()
+            .find(|cs| cs.lang_slug == lang_slug)
+            .cloned()
+    }
+
+    pub fn create_readme_data(&self) -> String {
+        let mut readme_data = format!("# {}\n\n", self.problem);
+        readme_data.push_str(&html2md::parse_html(&self.content));
+
+        readme_data.push_str("\n\n**Topics:**\n");
+        for topic in &self.topics {
+            readme_data.push_str(&format!("\n- {}", topic.name));
+        }
+
+        readme_data.push_str("\n\n**Hints:**\n");
+        for hint in &self.hints {
+            readme_data.push_str(&format!("\n- {hint}"));
+        }
+
+        readme_data
+    }
+}
+
+impl TryFrom<Value> for Question {
+    type Error = Error;
+
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        Ok(serde_json::from_value::<Question>(value)?)
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct CodeSnippet {
+    pub lang: String,
+    #[serde(rename = "langSlug")]
+    pub lang_slug: String,
+    pub code: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct Topic {
+    pub name: String,
+    pub slug: String,
 }

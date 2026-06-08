@@ -25,3 +25,7 @@ leetlocal --problem "two-sum" --language <language> --output-dir <path_to_dir>
 ```bash
 leetlocal --problem "partition-array-according-to-given-pivot" --language <language> --output-dir <path_to_dir>
 ```
+
+**TODO**
+
+- Automatically scaffold language agnostic test cases
