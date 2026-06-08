@@ -1,7 +1,5 @@
-use crate::error::Error;
+use crate::{Error, Question};
 use reqwest::header::{CONTENT_TYPE, REFERER, USER_AGENT};
-use serde::Deserialize;
-use serde_json::Value;
 
 pub async fn get_question(title: &str) -> Result<Question, Error> {
     let query_str = r#"
@@ -10,6 +8,12 @@ pub async fn get_question(title: &str) -> Result<Question, Error> {
             title
             content
             exampleTestcases
+            hints
+            codeSnippets {
+              lang
+              langSlug
+              code
+            }
           }
         }
     "#;
@@ -45,23 +49,4 @@ pub async fn get_question(title: &str) -> Result<Question, Error> {
     }
 
     Question::try_from(raw_question)
-}
-
-#[derive(Deserialize, Debug, Default)]
-pub struct Question {
-    #[serde(rename = "title")]
-    pub problem: String,
-    pub content: String,
-    #[serde(rename = "exampleTestcases")]
-    pub example_testcases: String,
-}
-
-impl TryFrom<Value> for Question {
-    type Error = Error;
-
-    fn try_from(value: Value) -> Result<Self, Self::Error> {
-        let mut question: Question = serde_json::from_value(value)?;
-        question.content = html2md::parse_html(&question.content);
-        Ok(question)
-    }
 }

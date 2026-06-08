@@ -1,9 +1,13 @@
 mod error;
+mod language;
 mod leetcode;
+mod question;
 mod templates;
 
-use clap::{Parser, ValueEnum};
-use std::{fmt, path::PathBuf, process};
+pub(crate) use crate::{error::Error, language::Language, question::Question};
+
+use clap::Parser;
+use std::{path::PathBuf, process};
 
 #[tokio::main]
 async fn main() {
@@ -22,6 +26,11 @@ async fn main() {
         }
     };
 
+    if !question.has_language(&lang) {
+        eprintln!("Question does not have support for language '{lang}'");
+        process::exit(1);
+    }
+
     /*
     if !out_dir.exists() {
         if !force {
@@ -36,10 +45,7 @@ async fn main() {
     }
     */
 
-    println!(
-        "problem = '{problem}'\nlanguage = '{lang}'\noutput directory = '{out_dir:?}'\nforce = '{force}'\nquestion : \n\t'problem={}'\n\t'content={}'\n\t'test_cases={}'",
-        question.problem, question.content, question.example_testcases
-    );
+    println!("{}", serde_json::to_string_pretty(&question).unwrap());
 }
 
 #[derive(Parser, Debug)]
@@ -62,18 +68,4 @@ struct CliArgs {
     /// Force creation of output directory
     #[arg(short, long, default_value_t = false)]
     force: bool,
-}
-
-#[derive(Copy, Clone, Debug, ValueEnum)]
-#[value(rename_all = "verbatim")]
-pub enum Language {
-    JavaScript,
-}
-
-impl fmt::Display for Language {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Language::JavaScript => write!(f, "JavaScript"),
-        }
-    }
 }
