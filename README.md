@@ -1,6 +1,6 @@
 # leetlocal
 
-Scaffolding to bring leetcode questions locally, so you can work on problems in your local IDE.
+Scaffolding to bring leetcode questions local, so you can work on problems in your local IDE.
 
 # Usage
 
