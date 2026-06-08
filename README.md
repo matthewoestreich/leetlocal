@@ -8,9 +8,7 @@ Scaffolding to bring leetcode questions local, so you can work on problems in yo
 leetlocal --title "partition-array-according-to-given-pivot" --language JavaScript --output-dir .
 ```
 
-# Important
-
-## Title
+**IMPORTANT**
 
 The `--title` argument must match the title slug used in the URL!
 
