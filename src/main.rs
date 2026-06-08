@@ -9,12 +9,12 @@ use std::{fmt, path::PathBuf, process};
 async fn main() {
     let args = CliArgs::parse();
 
-    let title = args.title;
+    let problem = args.problem;
     let lang = args.language;
     let out_dir = args.output_dir;
     let force = args.force;
 
-    let question = match leetcode::get_question(&title).await {
+    let question = match leetcode::get_question(&problem).await {
         Ok(q) => q,
         Err(e) => {
             eprintln!("Something went wrong while getting question : '{e}'");
@@ -37,8 +37,8 @@ async fn main() {
     */
 
     println!(
-        "title = '{title}'\nlanguage = '{lang}'\noutput directory = '{out_dir:?}'\nforce = '{force}'\nquestion : \n\t'title={}'\n\t'content={}'\n\t'test_cases={}'",
-        question.title, question.content, question.example_testcases
+        "problem = '{problem}'\nlanguage = '{lang}'\noutput directory = '{out_dir:?}'\nforce = '{force}'\nquestion : \n\t'problem={}'\n\t'content={}'\n\t'test_cases={}'",
+        question.problem, question.content, question.example_testcases
     );
 }
 
@@ -47,7 +47,7 @@ async fn main() {
 struct CliArgs {
     /// Query leetcode for question based upon it's id
     #[arg(short, long, required = true)]
-    title: String,
+    problem: String,
 
     /// The language you want to solve the problem in
     #[arg(short, long, required = true, value_enum)]

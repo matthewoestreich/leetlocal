@@ -49,7 +49,8 @@ pub async fn get_question(title: &str) -> Result<Question, Error> {
 
 #[derive(Deserialize, Debug, Default)]
 pub struct Question {
-    pub title: String,
+    #[serde(rename = "title")]
+    pub problem: String,
     pub content: String,
     #[serde(rename = "exampleTestcases")]
     pub example_testcases: String,
