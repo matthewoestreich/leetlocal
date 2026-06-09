@@ -9,7 +9,6 @@ pub enum Error {
     QuestionNotFound,
 }
 
-// 1. Implement Display for printing errors
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -21,7 +20,6 @@ impl fmt::Display for Error {
     }
 }
 
-// 2. Implement the standard Error trait
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
@@ -33,7 +31,6 @@ impl std::error::Error for Error {
     }
 }
 
-// 3. Implement From to use the `?` operator on reqwest calls
 impl From<reqwest::Error> for Error {
     fn from(err: reqwest::Error) -> Self {
         Error::Network(err)
