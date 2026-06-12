@@ -29,8 +29,7 @@ async fn run() -> Result<(), Error> {
 
     let question_snippet = question
         .get_snippet(&lang)
-        .ok_or(Error::UnsupportedLanguage(lang))?
-        .code;
+        .ok_or(Error::UnsupportedLanguage(lang))?;
 
     if out_dir.exists() && out_dir.is_file() {
         return Err(Error::OutputDirectoryNotDirectory);

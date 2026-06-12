@@ -9,8 +9,9 @@ pub async fn get_question(title_slug: &str) -> Result<Question, Error> {
           question(titleSlug: $titleSlug) {
             title
             content
-            exampleTestcases
+            exampleTestcaseList
             hints
+            metaData
             codeSnippets {
               lang
               langSlug
@@ -61,23 +62,34 @@ pub async fn get_question(title_slug: &str) -> Result<Question, Error> {
 pub struct Question {
     #[serde(rename = "title")]
     pub problem: String,
-    #[serde(rename = "exampleTestcases")]
-    pub example_testcases: String,
+    #[serde(rename = "exampleTestcaseList")]
+    pub example_testcase_list: Vec<String>,
     #[serde(rename = "codeSnippets")]
     pub code_snippets: Vec<CodeSnippet>,
     #[serde(rename = "topicTags")]
     pub topics: Vec<Topic>,
+    #[serde(rename = "metaData", deserialize_with = "from_json_string")]
+    pub metadata: Metadata,
     pub content: String,
     pub hints: Vec<String>,
 }
 
 impl Question {
-    pub fn get_snippet(&self, language: &Language) -> Option<CodeSnippet> {
+    pub fn get_snippet(&self, language: &Language) -> Option<String> {
         let lang_slug = language.slug();
-        self.code_snippets
+        let snip = self
+            .code_snippets
             .iter()
             .find(|cs| cs.lang_slug == lang_slug)
-            .cloned()
+            .cloned()?;
+
+        // Some languages need code prepended to the snippet.
+        // For example, Rust only provides `impl Solution { /*...*/ }` and
+        // still needs the `pub struct Solution` prepended.
+        Some(match language {
+            Language::Rust => format!("pub struct Solution;\n\n{}", snip.code),
+            _ => snip.code,
+        })
     }
 
     pub fn create_readme_data(&self) -> String {
@@ -128,4 +140,36 @@ pub struct CodeSnippet {
 pub struct Topic {
     pub name: String,
     pub slug: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct MetadataParam {
+    pub name: String,
+    #[serde(rename = "type")]
+    pub kind: String,
+    pub dealloc: Option<bool>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct MetadataReturn {
+    #[serde(rename = "type")]
+    pub kind: String,
+    pub dealloc: Option<bool>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct Metadata {
+    pub name: String,
+    pub params: Vec<MetadataParam>,
+    #[serde(rename = "return")]
+    pub return_data: MetadataReturn,
+}
+
+fn from_json_string<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+where
+    T: serde::de::DeserializeOwned,
+    D: serde::Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    serde_json::from_str(&s).map_err(serde::de::Error::custom)
 }
