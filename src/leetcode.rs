@@ -84,14 +84,24 @@ impl Question {
         let mut readme_data = format!("# {}\n\n", self.problem);
         readme_data.push_str(&html2md::parse_html(&self.content));
 
-        readme_data.push_str("\n\n**Topics:**\n");
-        for topic in &self.topics {
-            readme_data.push_str(&format!("\n- {}", topic.name));
+        if !self.topics.is_empty() {
+            readme_data.push_str(
+                "\n\n---\n\n**Topics:**\n\n<details>\n\t<summary>Click to show topics</summary>\n",
+            );
+            for topic in &self.topics {
+                readme_data.push_str(&format!("\n- {}", topic.name));
+            }
+            readme_data.push_str("\n\n</details></br>");
         }
 
-        readme_data.push_str("\n\n**Hints:**\n");
-        for hint in &self.hints {
-            readme_data.push_str(&format!("\n- {hint}"));
+        if !self.hints.is_empty() {
+            readme_data.push_str(
+                "\n\n---\n\n**Hints:**\n\n<details>\n\t<summary>Click to show hints</summary>\n",
+            );
+            for hint in &self.hints {
+                readme_data.push_str(&format!("\n- {hint}"));
+            }
+            readme_data.push_str("\n\n</details></br>")
         }
 
         readme_data
