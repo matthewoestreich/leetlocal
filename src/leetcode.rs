@@ -145,15 +145,13 @@ pub struct Topic {
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct MetadataParam {
     pub name: String,
-    #[serde(rename = "type")]
-    pub kind: String,
+    pub r#type: String,
     pub dealloc: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct MetadataReturn {
-    #[serde(rename = "type")]
-    pub kind: String,
+    pub r#type: String,
     pub dealloc: Option<bool>,
 }
 
@@ -161,8 +159,7 @@ pub struct MetadataReturn {
 pub struct Metadata {
     pub name: String,
     pub params: Vec<MetadataParam>,
-    #[serde(rename = "return")]
-    pub return_data: MetadataReturn,
+    pub r#return: MetadataReturn,
 }
 
 fn from_json_string<'de, T, D>(deserializer: D) -> Result<T, D::Error>
